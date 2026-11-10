@@ -22,5 +22,19 @@ target_link_libraries(OpenGLGame PRIVATE
 )
 
 set_target_properties(OpenGLGame PROPERTIES
-    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    VS_DEBUGGER_WORKING_DIRECTORY "$<TARGET_FILE_DIR:OpenGLGame>"
+)
+
+# 셰이더 복사
+add_custom_command(TARGET OpenGLGame POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/shaders"
+    "$<TARGET_FILE_DIR:OpenGLGame>/shaders"
+)
+
+# 에셋 복사
+add_custom_command(TARGET OpenGLGame POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${CMAKE_SOURCE_DIR}/assets"
+    "$<TARGET_FILE_DIR:OpenGLGame>/assets"
 )
