@@ -4,8 +4,9 @@
 
 #include "Shader.h"
 
-#include "Math/Mat4.h"
 #include "Math/Vec3.h"
+#include "Math/Vec4.h"
+#include "Math/Mat4.h"
 #include "Math/Transform.h"
 
 // 창 크기 변경 콜백
@@ -126,11 +127,11 @@ int main()
             shader.Use();
 
             Mat4 model;
-            model *= Transform::Scale(0.5f, 0.2f, 1.0f);
-            // model *= Transform::RotateZ(static_cast<float>(glfwGetTime()));
-            // model *= Transform::Translate(0.5f, 0.0f, 0.0f);
+          
+            model *= Transform::RotateZ(static_cast<float>(glfwGetTime()));
+            model *= Transform::Translate(0.5f, 0.0f, 0.0f);
+            model *= Transform::Scale(0.5f, 0.5f, 0.5f);
             
-
             // 모델 행렬을 셰이더에 전달
             shader.SetMat4("uModel", model);
 
