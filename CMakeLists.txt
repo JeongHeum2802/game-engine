@@ -11,10 +11,16 @@ find_package(OpenGL REQUIRED)
 
 add_executable(OpenGLGame
     src/main.cpp
+    src/Shader.cpp
+    src/Shader.h
 )
 
 target_link_libraries(OpenGLGame PRIVATE
     glfw
     glad::glad
     OpenGL::GL
+)
+
+set_target_properties(OpenGLGame PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
 )
