@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <string>
 
+#include "Math/Mat4.h"
+
 class Shader
 {
 public:
@@ -16,6 +18,8 @@ public:
     Shader& operator=(const Shader&) = delete;
 
     void Use() const;
+    void SetFloat(const std::string& name, float value) const;
+    void SetMat4(const std::string& name, const Mat4& matrix) const;
 
 private:
     GLuint programID = 0;

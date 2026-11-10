@@ -1,9 +1,12 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 #include <iostream>
 
 #include "Shader.h"
+
+#include "Math/Mat4.h"
+#include "Math/Vec3.h"
+#include "Math/Transform.h"
 
 // 창 크기 변경 콜백
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -52,11 +55,17 @@ int main()
     int width, height;
 
     glfwGetFramebufferSize(window, &width, &height);
+    glViewport(0, 0, width, height);
+
+    glfwSetFramebufferSizeCallback(
+        window,
+        framebuffer_size_callback
+    );
 
     // 1. 삼각형 정점 데이터
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
+        -0.3f, -0.3f, 0.0f,
+        0.3f, -0.3f, 0.0f,
         0.0f, 0.5f, 0.0f
     };
 
@@ -115,6 +124,15 @@ int main()
 
             // 셰이더 활성화
             shader.Use();
+
+            Mat4 model;
+            model *= Transform::Scale(0.5f, 0.2f, 1.0f);
+            // model *= Transform::RotateZ(static_cast<float>(glfwGetTime()));
+            // model *= Transform::Translate(0.5f, 0.0f, 0.0f);
+            
+
+            // 모델 행렬을 셰이더에 전달
+            shader.SetMat4("uModel", model);
 
             // 정점 데이터 설정 활성화
             glBindVertexArray(VAO);

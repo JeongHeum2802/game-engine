@@ -6,6 +6,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <vector>
+#include <glm/gtc/type_ptr.hpp>
 
 std::string Shader::ReadFile(const std::string& path)
 {
@@ -151,4 +152,35 @@ Shader::~Shader()
     {
         glDeleteProgram(programID);
     }
+}
+
+void Shader::SetFloat(
+    const std::string& name,
+    float value
+) const
+{
+    GLint location = glGetUniformLocation(
+        programID,
+        name.c_str()
+    );
+
+    glUniform1f(location, value);
+}
+
+void Shader::SetMat4(
+    const std::string& name,
+    const Mat4& matrix
+) const
+{
+    GLint location = glGetUniformLocation(
+        programID,
+        name.c_str()
+    );
+
+    glUniformMatrix4fv(
+        location,
+        1,
+        GL_FALSE,
+        matrix.Data()
+    );
 }

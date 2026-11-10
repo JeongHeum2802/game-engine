@@ -7,18 +7,23 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(glfw3 CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
+find_package(glm CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 
 add_executable(OpenGLGame
     src/main.cpp
     src/Shader.cpp
     src/Shader.h
+    src/Math/Mat4.h
+    src/Math/Vec3.h
+    src/Math/Transform.h
 )
 
 target_link_libraries(OpenGLGame PRIVATE
     glfw
     glad::glad
     OpenGL::GL
+    glm::glm
 )
 
 set_target_properties(OpenGLGame PROPERTIES
