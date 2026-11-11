@@ -20,6 +20,9 @@ add_executable(OpenGLGame
     src/Math/Transform.h
     src/Camera/Camera.h
     src/Camera/FollowCamera.h
+    src/Graphics/Mesh.h
+    src/Graphics/Mesh.cpp
+    src/Graphics/Primitive.h
 )
 
 target_link_libraries(OpenGLGame PRIVATE

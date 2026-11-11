@@ -13,6 +13,8 @@
 #include "Camera/Camera.h"
 #include "Camera/FollowCamera.h"
 
+#include "Graphics/Primitive.h"
+
 // 창 크기 변경 콜백
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -81,60 +83,6 @@ int main()
         framebuffer_size_callback
     );
 
-    // 1. 정육면체 정점 데이터
-    float data[6 * 2 * 3 * 3];
-    int idx = 0;
-
-    Vec3 vertices[8] = {
-        Vec3(-0.5f, -0.5f, -0.5f), // 0
-        Vec3( 0.5f, -0.5f, -0.5f), // 1
-        Vec3( 0.5f,  0.5f, -0.5f), // 2
-        Vec3(-0.5f,  0.5f, -0.5f), // 3
-        Vec3(-0.5f, -0.5f,  0.5f), // 4
-        Vec3( 0.5f, -0.5f,  0.5f), // 5
-        Vec3( 0.5f,  0.5f,  0.5f), // 6
-        Vec3(-0.5f,  0.5f,  0.5f)  // 7
-    };
-
-    quad(idx, data, vertices[0], vertices[1], vertices[2], vertices[3]);
-    quad(idx, data, vertices[4], vertices[0], vertices[3], vertices[7]);
-    quad(idx, data, vertices[5], vertices[4], vertices[7], vertices[6]);
-    quad(idx, data, vertices[1], vertices[5], vertices[6], vertices[2]);
-    quad(idx, data, vertices[3], vertices[2], vertices[6], vertices[7]);
-    quad(idx, data, vertices[4], vertices[5], vertices[1], vertices[0]);
-
-    // 2. VAO, VBO 생성
-    GLuint VAO, VBO;
-
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-
-    // 3. VAO 바인딩
-    glBindVertexArray(VAO);
-
-    // 4. VBO에 정점 데이터 업로드
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(
-        GL_ARRAY_BUFFER,
-        sizeof(data),
-        data,
-        GL_STATIC_DRAW
-    );
-
-    // 5. 정점 속성 설정
-    glVertexAttribPointer(
-        0,
-        3,
-        GL_FLOAT,
-        GL_FALSE,
-        3 * sizeof(float),
-        (void*)0
-    );
-
-    glEnableVertexAttribArray(0);
-
-    glBindVertexArray(0);
-
     // 6. 외부 쉐이더 파일 로딩
     {
         Shader shader(
@@ -145,6 +93,8 @@ int main()
         Camera camera;
 
         double lastTime = glfwGetTime();
+
+        auto quad = Primitive::CreateQuad();
 
         // 메인 루프
         while (!glfwWindowShouldClose(window))
@@ -162,7 +112,7 @@ int main()
 
             Mat4 model;
             model *= Transform::RotateY(static_cast<float>(currentTime));
-            camera.SetPosition(Vec3(0, 5.0f, -3.0f));
+            camera.SetPosition(Vec3(0, 3.0f, -3.0f));
             Mat4 view = camera.GetViewMatrix();
             Mat4 projection = camera.GetProjectionMatrix(aspect);
 
@@ -173,10 +123,7 @@ int main()
             shader.SetMat4("uView", view);
             shader.SetMat4("uProjection", projection);
 
-
-            // 정점 데이터 설정 활성화 및 그리기
-            glBindVertexArray(VAO);
-            glDrawArrays(GL_TRIANGLES, 0, 36);
+            quad->Draw();
 
             // 화면 출력
             glfwSwapBuffers(window);
@@ -185,9 +132,6 @@ int main()
             glfwPollEvents();
         }
     }
-    // 자원 해제
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
 
     glfwDestroyWindow(window);
     glfwTerminate();
