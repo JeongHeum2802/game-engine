@@ -1,4 +1,3 @@
-
 #pragma once
 
 #include "Mat4.h"
@@ -68,6 +67,63 @@ public:
         result(0, 0) = x;
         result(1, 1) = y;
         result(2, 2) = z;
+
+        return result;
+    }
+
+    static Mat4 Perspective(
+        float fov,
+        float aspect,
+        float nearPlane,
+        float farPlane) {
+        float tanHalfFov = std::tan(fov * 0.5f);
+
+        Mat4 result = Mat4::Zero();
+
+        result(0, 0) = 1.0f / (aspect * tanHalfFov);
+        result(1, 1) = 1.0f / tanHalfFov;
+
+        result(2, 2) =
+            -(farPlane + nearPlane) /
+            (farPlane - nearPlane);
+
+        result(2, 3) =
+            -(2.0f * farPlane * nearPlane) /
+            (farPlane - nearPlane);
+
+        result(3, 2) = -1.0f;
+
+        return result;
+    }
+
+    static Mat4 LookAt(
+        const Vec3 &eye,
+        const Vec3 &target,
+        const Vec3 &worldUp) 
+    {
+        Vec3 forward = (target - eye).Normalized();
+        Vec3 right = forward.Cross(worldUp).Normalized();
+        Vec3 up = right.Cross(forward);
+
+        Mat4 result = Mat4::Identity();
+
+        // 카메라의 회전
+        result(0, 0) = right.x;
+        result(0, 1) = right.y;
+        result(0, 2) = right.z;
+
+        result(1, 0) = up.x;
+        result(1, 1) = up.y;
+        result(1, 2) = up.z;
+
+        result(2, 0) = -forward.x;
+        result(2, 1) = -forward.y;
+        result(2, 2) = -forward.z;
+
+        // 카메라 위치의 역변환
+        result(0, 3) = -right.Dot(eye);
+        result(1, 3) = -up.Dot(eye);
+        result(2, 3) = forward.Dot(eye);
 
         return result;
     }

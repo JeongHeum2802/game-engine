@@ -18,6 +18,8 @@ add_executable(OpenGLGame
     src/Math/Vec3.h
     src/Math/Vec4.h
     src/Math/Transform.h
+    src/Camera/Camera.h
+    src/Camera/FollowCamera.h
 )
 
 target_link_libraries(OpenGLGame PRIVATE
