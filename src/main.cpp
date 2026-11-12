@@ -21,18 +21,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
     glViewport(0, 0, width, height);
 }
 
-void quad(int& idx, float* vertices, Vec3 a, Vec3 b, Vec3 c, Vec3 d)
-{
-  vertices[idx++] = a.x; vertices[idx++] = a.y; vertices[idx++] = a.z;
-  vertices[idx++] = b.x; vertices[idx++] = b.y; vertices[idx++] = b.z;
-  vertices[idx++] = c.x; vertices[idx++] = c.y; vertices[idx++] = c.z;
-
-  vertices[idx++] = a.x; vertices[idx++] = a.y; vertices[idx++] = a.z;
-  vertices[idx++] = c.x; vertices[idx++] = c.y; vertices[idx++] = c.z;
-  vertices[idx++] = d.x; vertices[idx++] = d.y; vertices[idx++] = d.z;
-}
-
-
 int main()
 {
     // GLFW 초기화
@@ -94,7 +82,7 @@ int main()
 
         double lastTime = glfwGetTime();
 
-        auto quad = Primitive::CreateQuad();
+        auto cube = Primitive::CreateCube();
 
         // 메인 루프
         while (!glfwWindowShouldClose(window))
@@ -123,7 +111,7 @@ int main()
             shader.SetMat4("uView", view);
             shader.SetMat4("uProjection", projection);
 
-            quad->Draw();
+            cube->Draw();
 
             // 화면 출력
             glfwSwapBuffers(window);
