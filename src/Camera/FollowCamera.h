@@ -18,4 +18,9 @@ public:
     {
         return camera;
     }
+
+    void SetOffset(const Vec3& newOffset)
+    {
+        offset = newOffset;
+    }
 };

@@ -1,17 +1,18 @@
 #pragma once
 
 #include "Mat4.h"
+#include "Vec3.h"
 #include <cmath>
 
 class Transform {
 public:
     // 이동 행렬
-    static Mat4 Translate(float x, float y, float z) {
+    static Mat4 Translate(const Vec3& vec3) {
         Mat4 result = Mat4::Identity();
 
-        result(0, 3) = x;
-        result(1, 3) = y;
-        result(2, 3) = z;
+        result(0, 3) = vec3.x;
+        result(1, 3) = vec3.y;
+        result(2, 3) = vec3.z;
 
         return result;
     }
@@ -61,12 +62,12 @@ public:
         return result;
     }
 
-    static Mat4 Scale(float x, float y, float z) {
+    static Mat4 Scale(const Vec3& vec3) {
         Mat4 result = Mat4::Identity();
 
-        result(0, 0) = x;
-        result(1, 1) = y;
-        result(2, 2) = z;
+        result(0, 0) = vec3.x;
+        result(1, 1) = vec3.y;
+        result(2, 2) = vec3.z;
 
         return result;
     }

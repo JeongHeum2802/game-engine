@@ -4,7 +4,6 @@
 
 #include "Shader.h"
 
-
 #include "Math/Vec3.h"
 #include "Math/Vec4.h"
 #include "Math/Mat4.h"
@@ -13,7 +12,12 @@
 #include "Camera/Camera.h"
 #include "Camera/FollowCamera.h"
 
+#include "Scene/Light.h"
+
 #include "Graphics/Primitive.h"
+
+#include "Game/GameObject.h"
+#include "Game/Player.h"
 
 // 창 크기 변경 콜백
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -74,18 +78,37 @@ int main()
     // 6. 외부 쉐이더 파일 로딩
     {
         Shader shader(
-            "shaders/triangle.vert",
-            "shaders/triangle.frag"
+            "shaders/standard.vert",
+            "shaders/standard.frag"
         );
 
-        Camera camera;
+        FollowCamera camera;
+        camera.SetOffset(Vec3(0.0f, 7.0f, 10.0f));
+
+        auto cubeMesh = Primitive::CreateCube();
+
+        // 씬에 바닥 추가
+        GameObject ground(cubeMesh.get());
+
+        ground.position = Vec3(0.0f, -0.25f, 0.0f);
+        ground.scale = Vec3(20.0f, 0.5f, 20.0f);
+        ground.color = Vec3(0.7f, 0.7f, 0.7f);
+
+        // 씬에 플레이어 추가
+        Player player(cubeMesh.get());
+
+        player.position = Vec3(0.0f, 0.5f, 0.0f);
+        player.scale = Vec3(0.8f, 1.0f, 0.8f);
+        player.color = Vec3(0.4f, 0.7f, 1.0f);
+
+        // 빛 추가
+        DirectionalLight sun;
+        sun.direction = Vec3(-1.0f, -1.0f, -1.0f);
+        sun.color = Vec3(1.0f, 1.0f, 1.0f);
+        sun.intensity = 0.8f;
 
         double lastTime = glfwGetTime();
-
-        auto quad = Primitive::CreateQuad();
-        auto cube = Primitive::CreateCube();
-        auto sphere = Primitive::CreateSphere(0.7, 32, 16);
-
+        
         // 메인 루프
         while (!glfwWindowShouldClose(window))
         {
@@ -96,41 +119,41 @@ int main()
             // 화면 초기화
             glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-            //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+            player.moveDirection = Vec3(0.0f, 0.0f, 0.0f);
+
+             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+                player.moveDirection.z -= 1.0f;
+
+            if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+                player.moveDirection.z += 1.0f;
+
+            if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+                player.moveDirection.x -= 1.0f;
+
+            if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+                player.moveDirection.x += 1.0f;
+            
+            camera.Update(player.GetPosition());
 
             float aspect = static_cast<float>(width) / height;
 
-            Mat4 model;
-            model *= Transform::Translate(1.0f, 0, 0);
-            model *= Transform::RotateY(static_cast<float>(currentTime));
-            camera.SetPosition(Vec3(0, 0, 5.0f));
-            Mat4 view = camera.GetViewMatrix();
-            Mat4 projection = camera.GetProjectionMatrix(aspect);
+            Mat4 view = camera.GetCamera().GetViewMatrix();
+            Mat4 projection = camera.GetCamera().GetProjectionMatrix(aspect);
 
             // 셰이더 활성화
             shader.Use();
 
-            shader.SetMat4("uModel", model);
             shader.SetMat4("uView", view);
             shader.SetMat4("uProjection", projection);
+            shader.SetVec3("uObjectColor",Vec3(1.0f, 1.0f, 1.0f));
 
-            // 광원 위치 (World Space)
-            shader.SetVec3("uLightPosition", Vec3(0, 0, 1.0f));
+            shader.SetDirectionalLight("uDirectionalLight",sun);
 
-            // 광원 색상
-            shader.SetVec3("uLightColor", Vec3(1.0f, 1.0f, 1.0f));
+            player.Update(deltaTime);
 
-            // 물체 색상
-            shader.SetVec3("uObjectColor",Vec3(1.0f, 0.5f, 0.2f));
-
-            // 거리 감쇠
-            shader.SetFloat("uConstant", 1.0f);
-            shader.SetFloat("uLinear", 0.09f);
-            shader.SetFloat("uQuadratic", 0.032f);
-
-            //quad->Draw();
-            //cube->Draw();
-            sphere->Draw();
+            player.Render(shader);
+            ground.Render(shader);
 
             // 화면 출력
             glfwSwapBuffers(window);

@@ -25,6 +25,10 @@ add_executable(OpenGLGame
     src/Graphics/Mesh.h
     src/Graphics/Mesh.cpp
     src/Graphics/Primitive.h
+    src/Scene/Light.h
+    src/Game/GameObject.h
+    src/Game/Player.h
+    src/Game/Player.cpp
 )
 
 target_link_libraries(OpenGLGame PRIVATE

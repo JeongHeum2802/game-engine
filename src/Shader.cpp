@@ -154,6 +154,19 @@ Shader::~Shader()
     }
 }
 
+void Shader::SetInt(
+    const std::string& name,
+    int value
+) const
+{
+    GLint location = glGetUniformLocation(
+        programID,
+        name.c_str()
+    );
+
+    glUniform1i(location, value);
+}
+
 void Shader::SetFloat(
     const std::string& name,
     float value
@@ -196,4 +209,29 @@ void Shader::SetVec3(
     );
 
     glUniform3f(location, vec3.x, vec3.y, vec3.z);
+}
+
+void Shader::SetDirectionalLight(
+    const std::string& name,
+    const DirectionalLight& light
+) const
+{
+    SetVec3(name + ".direction", light.direction);
+    SetVec3(name + ".color", light.color);
+    SetFloat(name + ".intensity", light.intensity);
+}
+
+void Shader::SetPointLight(
+    const std::string& name,
+    const PointLight& light
+) const
+{
+    SetVec3(name + ".position", light.position);
+    SetVec3(name + ".color", light.color);
+
+    SetFloat(name + ".intensity", light.intensity);
+
+    SetFloat(name + ".constant", light.constant);
+    SetFloat(name + ".linear", light.linear);
+    SetFloat(name + ".quadratic", light.quadratic);
 }
