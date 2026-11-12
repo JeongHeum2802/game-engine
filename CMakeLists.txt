@@ -15,11 +15,13 @@ add_executable(OpenGLGame
     src/Shader.cpp
     src/Shader.h
     src/Math/Mat4.h
+    src/Math/Vec2.h
     src/Math/Vec3.h
     src/Math/Vec4.h
     src/Math/Transform.h
     src/Camera/Camera.h
     src/Camera/FollowCamera.h
+    src/Graphics/Vertex.h
     src/Graphics/Mesh.h
     src/Graphics/Mesh.cpp
     src/Graphics/Primitive.h

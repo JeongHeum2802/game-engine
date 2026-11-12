@@ -82,7 +82,9 @@ int main()
 
         double lastTime = glfwGetTime();
 
+        auto quad = Primitive::CreateQuad();
         auto cube = Primitive::CreateCube();
+        auto sphere = Primitive::CreateSphere();
 
         // 메인 루프
         while (!glfwWindowShouldClose(window))
@@ -111,7 +113,9 @@ int main()
             shader.SetMat4("uView", view);
             shader.SetMat4("uProjection", projection);
 
-            cube->Draw();
+            //quad->Draw();
+            //cube->Draw();
+            sphere->Draw();
 
             // 화면 출력
             glfwSwapBuffers(window);

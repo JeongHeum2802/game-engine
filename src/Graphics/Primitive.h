@@ -9,11 +9,12 @@ class Primitive
 public:
     static std::unique_ptr<Mesh> CreateQuad()
     {
-        std::vector<float> vertices = {
-            -0.5f, -0.5f, 0.0f,
-             0.5f, -0.5f, 0.0f,
-             0.5f,  0.5f, 0.0f,
-            -0.5f,  0.5f, 0.0f
+        std::vector<Vertex> vertices = {
+            // Position                 Normal               UV
+            {{-0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}},
+            {{ 0.5f, -0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}},
+            {{ 0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}},
+            {{-0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}}
         };
 
         std::vector<unsigned int> indices = {
@@ -24,53 +25,68 @@ public:
         return std::make_unique<Mesh>(vertices, indices);
     }
 
-    // 정육면체: 한 변의 길이 1
+    // Cube
     static std::unique_ptr<Mesh> CreateCube()
     {
-        std::vector<float> vertices = {
-            // 뒷면 (z = -0.5)
-            -0.5f, -0.5f, -0.5f,
-             0.5f, -0.5f, -0.5f,
-             0.5f,  0.5f, -0.5f,
-            -0.5f,  0.5f, -0.5f,
+        std::vector<Vertex> vertices = {
+            // Front (+Z)
+            {{-0.5f, -0.5f,  0.5f}, {0, 0, 1}, {0, 0}},
+            {{ 0.5f, -0.5f,  0.5f}, {0, 0, 1}, {1, 0}},
+            {{ 0.5f,  0.5f,  0.5f}, {0, 0, 1}, {1, 1}},
+            {{-0.5f,  0.5f,  0.5f}, {0, 0, 1}, {0, 1}},
 
-            // 앞면 (z = 0.5)
-            -0.5f, -0.5f,  0.5f,
-             0.5f, -0.5f,  0.5f,
-             0.5f,  0.5f,  0.5f,
-            -0.5f,  0.5f,  0.5f
+            // Back (-Z)
+            {{ 0.5f, -0.5f, -0.5f}, {0, 0,-1}, {0, 0}},
+            {{-0.5f, -0.5f, -0.5f}, {0, 0,-1}, {1, 0}},
+            {{-0.5f,  0.5f, -0.5f}, {0, 0,-1}, {1, 1}},
+            {{ 0.5f,  0.5f, -0.5f}, {0, 0,-1}, {0, 1}},
+
+            // Left (-X)
+            {{-0.5f, -0.5f, -0.5f}, {-1, 0, 0}, {0, 0}},
+            {{-0.5f, -0.5f,  0.5f}, {-1, 0, 0}, {1, 0}},
+            {{-0.5f,  0.5f,  0.5f}, {-1, 0, 0}, {1, 1}},
+            {{-0.5f,  0.5f, -0.5f}, {-1, 0, 0}, {0, 1}},
+
+            // Right (+X)
+            {{ 0.5f, -0.5f,  0.5f}, {1, 0, 0}, {0, 0}},
+            {{ 0.5f, -0.5f, -0.5f}, {1, 0, 0}, {1, 0}},
+            {{ 0.5f,  0.5f, -0.5f}, {1, 0, 0}, {1, 1}},
+            {{ 0.5f,  0.5f,  0.5f}, {1, 0, 0}, {0, 1}},
+
+            // Top (+Y)
+            {{-0.5f,  0.5f,  0.5f}, {0, 1, 0}, {0, 0}},
+            {{ 0.5f,  0.5f,  0.5f}, {0, 1, 0}, {1, 0}},
+            {{ 0.5f,  0.5f, -0.5f}, {0, 1, 0}, {1, 1}},
+            {{-0.5f,  0.5f, -0.5f}, {0, 1, 0}, {0, 1}},
+
+            // Bottom (-Y)
+            {{-0.5f, -0.5f, -0.5f}, {0,-1, 0}, {0, 0}},
+            {{ 0.5f, -0.5f, -0.5f}, {0,-1, 0}, {1, 0}},
+            {{ 0.5f, -0.5f,  0.5f}, {0,-1, 0}, {1, 1}},
+            {{-0.5f, -0.5f,  0.5f}, {0,-1, 0}, {0, 1}}
         };
 
-        std::vector<unsigned int> indices = {
-            // 뒷면
-            0, 2, 1,
-            0, 3, 2,
+        std::vector<unsigned int> indices;
+        indices.reserve(36);
 
-            // 앞면
-            4, 5, 6,
-            4, 6, 7,
+        // 각 면의 정점 4개로 삼각형 2개 생성
+        for (unsigned int i = 0; i < 6; ++i)
+        {
+            unsigned int start = i * 4;
 
-            // 왼쪽
-            0, 4, 7,
-            0, 7, 3,
+            indices.push_back(start + 0);
+            indices.push_back(start + 1);
+            indices.push_back(start + 2);
 
-            // 오른쪽
-            1, 2, 6,
-            1, 6, 5,
-
-            // 위쪽
-            3, 7, 6,
-            3, 6, 2,
-
-            // 아래쪽
-            0, 1, 5,
-            0, 5, 4
-        };
+            indices.push_back(start + 0);
+            indices.push_back(start + 2);
+            indices.push_back(start + 3);
+        }
 
         return std::make_unique<Mesh>(vertices, indices);
     }
 
-    // 구: UV Sphere 방식
+    // Sphere
     static std::unique_ptr<Mesh> CreateSphere(
         float radius = 0.5f,
         unsigned int sectors = 32,
@@ -78,14 +94,19 @@ public:
     )
     {
         if (radius <= 0.0f || sectors < 3 || stacks < 2)
+        {
             throw std::invalid_argument(
                 "Invalid sphere parameters"
             );
+        }
 
         constexpr float PI = 3.14159265358979323846f;
 
-        std::vector<float> vertices;
+        std::vector<Vertex> vertices;
         std::vector<unsigned int> indices;
+
+        vertices.reserve((stacks + 1) * (sectors + 1));
+        indices.reserve(6 * sectors * (stacks - 1));
 
         // 정점 생성
         for (unsigned int i = 0; i <= stacks; ++i)
@@ -104,9 +125,19 @@ public:
                 float x = xy * std::cos(sectorAngle);
                 float y = xy * std::sin(sectorAngle);
 
-                vertices.push_back(x);
-                vertices.push_back(y);
-                vertices.push_back(z);
+                Vec3 position(x, y, z);
+                Vec3 normal = position.Normalized();
+
+                Vec2 texCoord(
+                    static_cast<float>(j) / sectors,
+                    static_cast<float>(i) / stacks
+                );
+
+                vertices.push_back({
+                    position,
+                    normal,
+                    texCoord
+                });
             }
         }
 
