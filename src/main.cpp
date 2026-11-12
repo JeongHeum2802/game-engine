@@ -84,7 +84,7 @@ int main()
 
         auto quad = Primitive::CreateQuad();
         auto cube = Primitive::CreateCube();
-        auto sphere = Primitive::CreateSphere();
+        auto sphere = Primitive::CreateSphere(0.7, 32, 16);
 
         // 메인 루프
         while (!glfwWindowShouldClose(window))
@@ -101,9 +101,9 @@ int main()
             float aspect = static_cast<float>(width) / height;
 
             Mat4 model;
+            model *= Transform::Translate(1.0f, 0, 0);
             model *= Transform::RotateY(static_cast<float>(currentTime));
-            model *= Transform::Scale(1.3f, 1.0f, 1.0f);
-            camera.SetPosition(Vec3(0, 3.0f, -3.0f));
+            camera.SetPosition(Vec3(0, 0, 5.0f));
             Mat4 view = camera.GetViewMatrix();
             Mat4 projection = camera.GetProjectionMatrix(aspect);
 
@@ -113,6 +113,20 @@ int main()
             shader.SetMat4("uModel", model);
             shader.SetMat4("uView", view);
             shader.SetMat4("uProjection", projection);
+
+            // 광원 위치 (World Space)
+            shader.SetVec3("uLightPosition", Vec3(0, 0, 1.0f));
+
+            // 광원 색상
+            shader.SetVec3("uLightColor", Vec3(1.0f, 1.0f, 1.0f));
+
+            // 물체 색상
+            shader.SetVec3("uObjectColor",Vec3(1.0f, 0.5f, 0.2f));
+
+            // 거리 감쇠
+            shader.SetFloat("uConstant", 1.0f);
+            shader.SetFloat("uLinear", 0.09f);
+            shader.SetFloat("uQuadratic", 0.032f);
 
             //quad->Draw();
             //cube->Draw();

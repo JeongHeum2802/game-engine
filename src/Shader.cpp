@@ -184,3 +184,16 @@ void Shader::SetMat4(
         matrix.Data()
     );
 }
+
+void Shader::SetVec3(
+    const std::string& name,
+    const Vec3& vec3
+) const
+{
+    GLint location = glGetUniformLocation(
+        programID,
+        name.c_str()
+    );
+
+    glUniform3f(location, vec3.x, vec3.y, vec3.z);
+}

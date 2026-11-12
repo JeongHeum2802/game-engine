@@ -8,12 +8,19 @@ uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;
 
+uniform vec3 uLightDirection;
+uniform vec3 uOjectColor;
+
+out vec3 vWorldPos;
 out vec3 vNormal;
 out vec2 vTextCoord;
 
 void main()
 {
-    gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
+    vec4 worldPos = uModel * vec4(aPos, 1.0);
+    vWorldPos = worldPos.xyz;
+
+    gl_Position = uProjection * uView * worldPos;
 
     mat3 normalMatrix = transpose(inverse(mat3(uModel)));
     vNormal = normalize(normalMatrix * aNormal);

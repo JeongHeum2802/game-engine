@@ -5,6 +5,7 @@
 #include <string>
 
 #include "Math/Mat4.h"
+#include "Math/Vec3.h"
 
 class Shader
 {
@@ -20,6 +21,7 @@ public:
     void Use() const;
     void SetFloat(const std::string& name, float value) const;
     void SetMat4(const std::string& name, const Mat4& matrix) const;
+    void SetVec3(const std::string& name, const Vec3& vec3) const;
 
 private:
     GLuint programID = 0;
