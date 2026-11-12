@@ -15,6 +15,8 @@ void main()
 {
     gl_Position = uProjection * uView * uModel * vec4(aPos, 1.0);
 
-    vNormal = aNormal;
+    mat3 normalMatrix = transpose(inverse(mat3(uModel)));
+    vNormal = normalize(normalMatrix * aNormal);
+    
     vTextCoord = aTextCoord;
 }

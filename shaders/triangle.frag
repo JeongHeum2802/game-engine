@@ -1,11 +1,14 @@
 #version 330 core
 
-out vec4 FragColor;
-
 in vec3 vNormal;
-in vec2 vTexCoord;
+in vec2 vTextCoord;
+
+out vec4 FragColor;
 
 void main()
 {
-    FragColor = vec4(0.8f, 0.0f, 0.7f, 1.0);
+    vec3 normal = normalize(vNormal);
+
+    vec3 color = normal * 0.5 + 0.5;
+    FragColor = vec4(color, 1.0);
 }

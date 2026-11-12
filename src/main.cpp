@@ -102,6 +102,7 @@ int main()
 
             Mat4 model;
             model *= Transform::RotateY(static_cast<float>(currentTime));
+            model *= Transform::Scale(1.3f, 1.0f, 1.0f);
             camera.SetPosition(Vec3(0, 3.0f, -3.0f));
             Mat4 view = camera.GetViewMatrix();
             Mat4 projection = camera.GetProjectionMatrix(aspect);
