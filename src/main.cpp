@@ -19,6 +19,8 @@
 
 #include "Game/GameObject.h"
 #include "Game/Player.h"
+#include "Game/Weapon.h"
+#include "Game/Collision.h"
 
 #include "Graphics/Model.h"
 
@@ -110,11 +112,28 @@ int main()
         DirectionalLight sun;
         sun.direction = Vec3(0.5f, -1.0f, 0.0f);
         sun.color = Vec3(1.0f, 1.0f, 1.0f);
-        sun.intensity = 0.1f;
+        sun.intensity = 0.9f;
 
         // PointLight pointLight1;
         // pointLight1.position = Vec3(0.0f, 2.0f, 0.0f);
         // pointLight1.color = Vec3(1.0f, 1.0f, 1.0f);
+
+        // 적 추가
+        auto enemyMesh = Primitive::CreateSphere();
+
+        GameObject enemy(enemyMesh.get());
+
+        enemy.position = Vec3(3.0f, 0.65f, -4.0f);
+        enemy.scale = Vec3(1.3f, 1.3f, 1.3f);
+        enemy.color = Vec3(0.8f, 0.2f, 0.2f);
+
+        // Sphere 기본 반지름 0.5 * Scale 1.3
+        float enemyRadius = 0.65f;
+
+        float enemyHealth = 100.0f;
+        float hitFlashTimer = 0.0f;
+
+        Weapon weapon;  
 
         double lastTime = glfwGetTime();
         
@@ -194,6 +213,50 @@ int main()
                 {
                     // 7. 마우스 방향으로 회전
                     player.AimAt(mouseWorldPosition);
+
+                    // 마우스 왼쪽 버튼으로 연속 사격
+                    if (glfwGetMouseButton(
+                        window, GLFW_MOUSE_BUTTON_LEFT
+                    ) == GLFW_PRESS)
+                    {
+                        if (weapon.TryFire(currentTime))
+                        {
+                            Vec3 bulletDirection =
+                                mouseWorldPosition - player.position;
+
+                            bulletDirection.y = 0.0f;
+
+                            if (bulletDirection.Length() > 0.0001f)
+                            {
+                                bulletDirection =
+                                    bulletDirection.Normalized();
+
+                                float hitDistance = 0.0f;
+
+                                if (enemyHealth > 0.0f &&
+                                    RaycastCircleXZ(
+                                        player.position,
+                                        bulletDirection,
+                                        enemy.position,
+                                        enemyRadius,
+                                        weapon.range,
+                                        hitDistance
+                                    ))
+                                {
+                                    enemyHealth -= weapon.damage;
+
+                                    if (enemyHealth < 0.0f)
+                                        enemyHealth = 0.0f;
+
+                                    hitFlashTimer = 0.12f;
+
+                                    std::cout
+                                        << "Zombie HP: "
+                                        << enemyHealth << '\n';
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -216,9 +279,24 @@ int main()
             //     pointLight1
             // );
 
+            hitFlashTimer -= static_cast<float>(deltaTime);
+
+            if (hitFlashTimer > 0.0f)
+            {
+                enemy.color = Vec3(1.0f, 1.0f, 1.0f);
+            }
+            else
+            {
+                enemy.color = Vec3(0.8f, 0.2f, 0.2f);
+            }
 
             player.Render(shader);
             ground.Render(shader);
+
+            if (enemyHealth > 0.0f)
+            {
+                enemy.Render(shader);
+            }
 
             // 화면 출력
             glfwSwapBuffers(window);
