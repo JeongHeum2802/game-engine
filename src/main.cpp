@@ -8,6 +8,7 @@
 #include "Math/Vec4.h"
 #include "Math/Mat4.h"
 #include "Math/Transform.h"
+#include "Math/Ray.h"
 
 #include "Camera/Camera.h"
 #include "Camera/FollowCamera.h"
@@ -86,7 +87,7 @@ int main()
         );
 
         FollowCamera camera;
-        camera.SetOffset(Vec3(0.0f, 7.0f, 10.0f));
+        camera.SetOffset(Vec3(0.0f, 15.0f, 7.5f));
 
         auto cubeMesh = Primitive::CreateCube();
 
@@ -107,10 +108,13 @@ int main()
 
         // 빛 추가
         DirectionalLight sun;
-        sun.direction = Vec3(0.5f, -1.0f, 1.0f);
+        sun.direction = Vec3(0.5f, -1.0f, 0.0f);
         sun.color = Vec3(1.0f, 1.0f, 1.0f);
-        sun.intensity = 0.4f;
+        sun.intensity = 0.1f;
 
+        // PointLight pointLight1;
+        // pointLight1.position = Vec3(0.0f, 2.0f, 0.0f);
+        // pointLight1.color = Vec3(1.0f, 1.0f, 1.0f);
 
         double lastTime = glfwGetTime();
         
@@ -139,9 +143,59 @@ int main()
             if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
                 player.moveDirection.x += 1.0f;
             
+            player.Update(deltaTime);
             camera.Update(player.GetPosition());
 
+            // 3. 마우스 위치 획득
+            double mouseX, mouseY;
+            glfwGetCursorPos(window, &mouseX, &mouseY);
+
             float aspect = static_cast<float>(width) / height;
+
+            int windowWidth, windowHeight;
+            int framebufferWidth, framebufferHeight;
+
+            glfwGetWindowSize(
+                window,
+                &windowWidth,
+                &windowHeight
+            );
+
+            glfwGetFramebufferSize(
+                window,
+                &framebufferWidth,
+                &framebufferHeight
+            );
+
+            if (windowWidth > 0 && windowHeight > 0 &&
+                framebufferWidth > 0 && framebufferHeight > 0)
+            {
+                float aspect =
+                    static_cast<float>(framebufferWidth) /
+                    framebufferHeight;
+
+                // 5. 화면 좌표 -> 월드 Ray
+                Ray mouseRay =
+                    camera.GetCamera().ScreenPointToRay(
+                        mouseX,
+                        mouseY,
+                        windowWidth,
+                        windowHeight,
+                        aspect
+                    );
+
+                // 6. Player 중심 높이의 수평 평면과 교차
+                Vec3 mouseWorldPosition;
+
+                if (mouseRay.IntersectHorizontalPlane(
+                    player.position.y,
+                    mouseWorldPosition
+                ))
+                {
+                    // 7. 마우스 방향으로 회전
+                    player.AimAt(mouseWorldPosition);
+                }
+            }
 
             Mat4 view = camera.GetCamera().GetViewMatrix();
             Mat4 projection = camera.GetCamera().GetProjectionMatrix(aspect);
@@ -154,8 +208,14 @@ int main()
             shader.SetVec3("uObjectColor",Vec3(1.0f, 1.0f, 1.0f));
 
             shader.SetDirectionalLight("uDirectionalLight",sun);
+            // shader.SetInt("uPointLightCount", 1);
 
-            player.Update(deltaTime);
+            // 첫 번째 Point Light
+            // shader.SetPointLight(
+            //     "uPointLights[0]",
+            //     pointLight1
+            // );
+
 
             player.Render(shader);
             ground.Render(shader);

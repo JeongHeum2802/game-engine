@@ -14,4 +14,6 @@ public:
     float moveSpeed = 3.0f;
 
     Vec3 moveDirection = Vec3(0.0f, 0.0f, 0.0f);
+
+    void AimAt(const Vec3& worldPosition);
 };

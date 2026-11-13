@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Math/Transform.h"
+#include "Math/Ray.h"
 
 class Camera
 {
@@ -44,4 +45,12 @@ public:
             farPlane
         );
     }
+
+    Ray ScreenPointToRay(
+        double mouseX,
+        double mouseY,
+        int screenWidth,
+        int screenHeight,
+        float aspect
+    ) const;
 };

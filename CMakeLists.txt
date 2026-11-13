@@ -21,7 +21,9 @@ add_executable(OpenGLGame
     src/Math/Vec3.h
     src/Math/Vec4.h
     src/Math/Transform.h
+    src/Math/Ray.h
     src/Camera/Camera.h
+    src/Camera/Camera.cpp
     src/Camera/FollowCamera.h
     src/Graphics/Vertex.h
     src/Graphics/Mesh.h
