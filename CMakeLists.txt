@@ -11,6 +11,7 @@ find_package(glm CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_path(STB_INCLUDE_DIR NAMES stb_image.h REQUIRED)
+find_path(MINIAUDIO_INCLUDE_DIR NAMES miniaudio.h REQUIRED)
 
 add_executable(OpenGLGame
     src/main.cpp
@@ -39,6 +40,10 @@ add_executable(OpenGLGame
     src/Game/Player.cpp
     src/Game/Zombie.h
     src/Game/Zombie.cpp
+    src/Game/ZombieSpawner.h
+    src/Game/ZombieSpawner.cpp
+    src/Audio/AudioManager.h
+    src/Audio/AudioManager.cpp
 )
 
 target_link_libraries(OpenGLGame PRIVATE
@@ -49,10 +54,10 @@ target_link_libraries(OpenGLGame PRIVATE
     assimp::assimp
 )
 
-
 target_include_directories(OpenGLGame PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${STB_INCLUDE_DIR}
+    ${MINIAUDIO_INCLUDE_DIR}
 )
 
 set_target_properties(OpenGLGame PROPERTIES

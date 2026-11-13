@@ -26,8 +26,10 @@
 #include "Game/Weapon.h"
 #include "Game/Collision.h"
 #include "Game/Zombie.h"
+#include "Game/ZombieSpawner.h"
 
-#include "Graphics/Model.h"
+#include "Audio/AudioManager.h"
+
 
 // 창 크기 변경 콜백
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
@@ -102,7 +104,7 @@ int main()
         GameObject ground(cubeMesh.get());
 
         ground.position = Vec3(0.0f, -0.25f, 0.0f);
-        ground.scale = Vec3(20.0f, 0.5f, 20.0f);
+        ground.scale = Vec3(40.0f, 0.5f, 40.0f);
         ground.color = Vec3(0.8f, 0.8f, 0.8f);
 
         // 씬에 플레이어 추가
@@ -142,11 +144,16 @@ int main()
             zombies.push_back(std::move(zombie));
         };
 
-        SpawnZombie(Vec3( 4.0f, 0.5f, -4.0f));
-        SpawnZombie(Vec3(-5.0f, 0.5f, -2.0f));
-        SpawnZombie(Vec3( 2.0f, 0.5f,  5.0f));
+        ZombieSpawner spawner;
+
+        constexpr size_t MAX_ZOMBIES = 20;
+
+        int killCount = 0;
 
         Weapon weapon;  
+
+        AudioManager audio;
+        audio.SetVolume(0.7f);
 
         double lastTime = glfwGetTime();
         
@@ -163,7 +170,7 @@ int main()
 
             player.moveDirection = Vec3(0.0f, 0.0f, 0.0f);
 
-             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
                 player.moveDirection.z -= 1.0f;
 
             if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
@@ -181,6 +188,25 @@ int main()
             {
               zombie->SetTarget(player.GetPosition());
               zombie->Update(static_cast<float>(deltaTime));
+
+              if (zombie->TryAttack(currentTime))
+              {
+                  player.TakeDamage(zombie->attackDamage);
+                  audio.Play("player_hit.wav");
+                  std::cout
+                      << "Player HP: "
+                      << player.GetHealth()
+                      << " / "
+                      << player.GetMaxHealth()
+                      << '\n';
+
+                  if (player.IsDead())
+                  {
+                      std::cout << "GAME OVER!\n";
+                      audio.Play("game_over.wav");aaaa
+                      break;
+                  }
+              }
             }
 
             camera.Update(player.GetPosition());
@@ -237,12 +263,13 @@ int main()
                     player.AimAt(mouseWorldPosition);
 
                     // 마우스 왼쪽 버튼으로 연속 사격
-                    if (glfwGetMouseButton(
-                        window, GLFW_MOUSE_BUTTON_LEFT
-                    ) == GLFW_PRESS)
+                    if (!player.IsDead() &&
+                      glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS)
                     {
                         if (weapon.TryFire(currentTime))
                         {
+                            audio.Play("gunshot.wav");
+
                             Vec3 bulletDirection =
                                 mouseWorldPosition - player.position;
 
@@ -292,7 +319,17 @@ int main()
 
                                     if (hitZombie->IsDead())
                                     {
-                                        std::cout << "Zombie killed!\n";
+                                        audio.Play("zombie_death.wav");
+                                        ++killCount;
+
+                                    std::cout
+                                        << "Zombie killed! Total kills: "
+                                        << killCount
+                                        << '\n';
+                                    }
+                                    else 
+                                    {
+                                        audio.Play("zombie_hit.wav");
                                     }
                                 }
                             }
@@ -312,6 +349,23 @@ int main()
                 ),
                 zombies.end()
             );
+
+            // 2. 자동 스폰
+            if (!player.IsDead())
+            {
+                bool canSpawn = zombies.size() < MAX_ZOMBIES;
+
+                auto spawnPosition = spawner.Update(
+                    static_cast<float>(deltaTime),
+                    player.GetPosition(),
+                    canSpawn
+                );
+
+                if (spawnPosition.has_value())
+                {
+                    SpawnZombie(spawnPosition.value());
+                }
+            }
 
             Mat4 view = camera.GetCamera().GetViewMatrix();
             Mat4 projection = camera.GetCamera().GetProjectionMatrix(aspect);

@@ -1,5 +1,6 @@
 #include "Player.h"
 
+#include <algorithm>
 #include <cmath>
 
 void Player::Update(float deltaTime)
@@ -29,4 +30,27 @@ void Player::AimAt(const Vec3& worldPosition)
         direction.x,
         direction.z
     );
+}
+
+void Player::TakeDamage(float damage)
+{
+    if (IsDead() || damage <= 0.0f)
+        return;
+
+    health = std::max(0.0f, health - damage);
+}
+
+bool Player::IsDead() const
+{
+    return health <= 0.0f;
+}
+
+float Player::GetHealth() const
+{
+    return health;
+}
+
+float Player::GetMaxHealth() const
+{
+    return maxHealth;
 }
