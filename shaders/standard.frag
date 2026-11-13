@@ -27,6 +27,10 @@ in vec2 vTexCoord;
 out vec4 FragColor;
 
 uniform vec3 uObjectColor;
+uniform vec3 uBaseColor;
+
+uniform sampler2D uBaseColorTexture;
+uniform int uHasBaseColorTexture;
 
 uniform DirectionalLight uDirectionalLight;
 
@@ -96,7 +100,19 @@ void main()
         );
     }
 
-    vec3 result = uObjectColor * lighting;
+    vec3 surfaceColor = uObjectColor * uBaseColor;
+    // 텍스처가 있다면 색상을 곱함
+    if (uHasBaseColorTexture != 0)
+    {
+        vec4 texColor = texture(
+            uBaseColorTexture,
+            vTexCoord
+        );
+
+        surfaceColor *= texColor.rgb;
+    }
+
+    vec3 result = surfaceColor * lighting;
 
     FragColor = vec4(result, 1.0);
 }

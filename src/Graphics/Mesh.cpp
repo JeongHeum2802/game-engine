@@ -1,9 +1,12 @@
+#include <utility>
+
 #include "Vertex.h"
 #include "Mesh.h"
 
 Mesh::Mesh(
     const std::vector<Vertex>& vertices,
-    const std::vector<unsigned int>& indices)
+    const std::vector<unsigned int>& indices,
+    MaterialData material) : material(std::move(material))
 {
     indexCount = static_cast<GLsizei>(indices.size());
 
@@ -78,6 +81,17 @@ Mesh::~Mesh()
 
 void Mesh::Draw() const
 {
+    glActiveTexture(GL_TEXTURE0);
+
+    if (material.baseColorTexture)
+    {
+        material.baseColorTexture->Bind(0);
+    }
+    else
+    {
+        glBindTexture(GL_TEXTURE_2D, 0);
+    }
+    
     glBindVertexArray(VAO);
 
     glDrawElements(

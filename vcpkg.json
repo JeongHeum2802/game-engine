@@ -8,6 +8,7 @@
       "features": ["gl-api-33"]
     },
     "glm",
-    "assimp"
+    "assimp",
+    "stb"
   ]
 }

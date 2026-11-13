@@ -41,12 +41,31 @@ public:
             Transform::Scale(scale);
 
         shader.SetMat4("uModel", model);
-        shader.SetVec3("uObjectColor", color);
+        shader.SetInt("uBaseColorTexture", 0);
 
         for (Mesh* mesh : meshes)
         {
-            if (mesh)
-                mesh->Draw();
+            if (!mesh)
+                continue;
+
+            const MaterialData& material = mesh->GetMaterial();
+
+            shader.SetVec3(
+                "uObjectColor",
+                color
+            );
+
+            shader.SetVec3(
+                "uBaseColor",
+                material.baseColor
+            );
+
+            shader.SetInt(
+                "uHasBaseColorTexture",
+                material.baseColorTexture ? 1 : 0
+            );
+
+            mesh->Draw();
         }
     }
 

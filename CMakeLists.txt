@@ -10,6 +10,7 @@ find_package(glad CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(assimp CONFIG REQUIRED)
+find_path(STB_INCLUDE_DIR NAMES stb_image.h REQUIRED)
 
 add_executable(OpenGLGame
     src/main.cpp
@@ -28,6 +29,8 @@ add_executable(OpenGLGame
     src/Graphics/Primitive.h
     src/Graphics/Model.h
     src/Graphics/Model.cpp
+    src/Graphics/Texture2D.h
+    src/Graphics/Texture2D.cpp
     src/Scene/Light.h
     src/Game/GameObject.h
     src/Game/Player.h
@@ -42,8 +45,10 @@ target_link_libraries(OpenGLGame PRIVATE
     assimp::assimp
 )
 
+
 target_include_directories(OpenGLGame PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
+    ${STB_INCLUDE_DIR}
 )
 
 set_target_properties(OpenGLGame PROPERTIES
@@ -63,3 +68,7 @@ add_custom_command(TARGET OpenGLGame POST_BUILD
     "${CMAKE_SOURCE_DIR}/assets"
     "$<TARGET_FILE_DIR:OpenGLGame>/assets"
 )
+
+if(MSVC)
+    target_compile_options(OpenGLGame PRIVATE /utf-8)
+endif()

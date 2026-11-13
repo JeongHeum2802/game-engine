@@ -3,10 +3,15 @@
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
+#include <assimp/material.h>
+#include <assimp/texture.h>
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 Model::Model(const std::string& path)
 {
@@ -15,6 +20,8 @@ Model::Model(const std::string& path)
 
 void Model::Load(const std::string& path)
 {
+    modelDirectory = std::filesystem::path(path).parent_path();
+
     Assimp::Importer importer;
 
     const aiScene* scene = importer.ReadFile(
@@ -25,8 +32,9 @@ void Model::Load(const std::string& path)
         aiProcess_PreTransformVertices
     );
 
-    if (!scene->mRootNode ||
-        (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE))
+    if (!scene ||
+          !scene->mRootNode ||
+          (scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE))
     {
         std::cerr
             << "[Assimp] Incomplete scene: "
@@ -57,7 +65,7 @@ void Model::ProcessNode(
 
         const aiMesh* mesh = scene->mMeshes[meshIndex];
 
-        meshes.push_back(ProcessMesh(mesh));
+        meshes.push_back(ProcessMesh(mesh, scene));
     }
 
     // 자식 노드를 재귀적으로 처리
@@ -68,7 +76,8 @@ void Model::ProcessNode(
 }
 
 std::unique_ptr<Mesh> Model::ProcessMesh(
-    const aiMesh* mesh
+    const aiMesh* mesh,
+    const aiScene* scene
 )
 {
     std::vector<Vertex> vertices;
@@ -121,7 +130,9 @@ std::unique_ptr<Mesh> Model::ProcessMesh(
         }
     }
 
-    return std::make_unique<Mesh>(vertices, indices);
+    MaterialData material = LoadMaterial(mesh, scene);
+
+    return std::make_unique<Mesh>(vertices, indices, std::move(material));
 }
 
 void Model::Draw() const
@@ -143,4 +154,152 @@ std::vector<Mesh*> Model::GetMeshes() const
     }
 
     return result;
+}
+
+
+MaterialData Model::LoadMaterial(
+    const aiMesh* mesh,
+    const aiScene* scene
+)
+{
+    MaterialData result;
+
+    if (mesh->mMaterialIndex >= scene->mNumMaterials)
+        return result;
+
+    const aiMaterial* material =
+        scene->mMaterials[mesh->mMaterialIndex];
+
+    // GLB의 BaseColor Factor
+    aiColor4D color;
+
+    if (material->Get(
+        AI_MATKEY_BASE_COLOR, color
+    ) == AI_SUCCESS)
+    {
+        result.baseColor = Vec3(
+            color.r, color.g, color.b
+        );
+    }
+    else
+    {
+        // OBJ 등의 전통적인 Diffuse Color
+        aiColor3D diffuse;
+
+        if (material->Get(
+            AI_MATKEY_COLOR_DIFFUSE,
+            diffuse
+        ) == AI_SUCCESS)
+        {
+            result.baseColor = Vec3(
+                diffuse.r,
+                diffuse.g,
+                diffuse.b
+            );
+        }
+    }
+
+    // GLB의 BaseColor Texture 우선 사용
+    aiTextureType type = aiTextureType_BASE_COLOR;
+
+    if (material->GetTextureCount(type) == 0)
+        type = aiTextureType_DIFFUSE;
+
+    if (material->GetTextureCount(type) > 0)
+    {
+        aiString texturePath;
+
+        if (material->GetTexture(
+            type, 0, &texturePath
+        ) == AI_SUCCESS)
+        {
+            result.baseColorTexture =
+                LoadTexture(scene, texturePath);
+        }
+    }
+
+    return result;
+}
+
+
+
+std::shared_ptr<Texture2D> Model::LoadTexture(
+    const aiScene* scene,
+    const aiString& texturePath
+)
+{
+    std::string path = texturePath.C_Str();
+
+    // 동일 텍스처 중복 로딩 방지
+    auto found = textureCache.find(path);
+
+    if (found != textureCache.end())
+        return found->second;
+
+    std::shared_ptr<Texture2D> texture;
+
+    // GLB 내부에 포함된 텍스처 확인
+    const aiTexture* embedded =
+        scene->GetEmbeddedTexture(path.c_str());
+
+    if (embedded)
+    {
+        if (embedded->mHeight == 0)
+        {
+            // PNG / JPEG 등 압축 이미지
+            const unsigned char* bytes =
+                reinterpret_cast<const unsigned char*>(
+                    embedded->pcData
+                );
+
+            texture = std::make_shared<Texture2D>(
+                bytes,
+                embedded->mWidth
+            );
+        }
+        else
+        {
+            // 압축되지 않은 BGRA 이미지
+            const unsigned char* pixels =
+                reinterpret_cast<const unsigned char*>(
+                    embedded->pcData
+                );
+
+            texture = std::make_shared<Texture2D>(
+                pixels,
+                static_cast<int>(embedded->mWidth),
+                static_cast<int>(embedded->mHeight),
+                GL_BGRA
+            );
+        }
+    }
+    else
+    {
+        // 외부 이미지 파일 로딩
+        std::filesystem::path fullPath =
+            modelDirectory / path;
+
+        std::ifstream file(fullPath, std::ios::binary);
+
+        if (!file)
+        {
+            throw std::runtime_error(
+                "Texture not found: " + fullPath.string()
+            );
+        }
+
+        std::vector<unsigned char> bytes(
+            std::istreambuf_iterator<char>{file},
+            std::istreambuf_iterator<char>{}
+        );
+
+        texture = std::make_shared<Texture2D>(
+            bytes.data(),
+            bytes.size()
+        );
+    }
+
+    textureCache[path] = texture;
+
+    return texture;
 }

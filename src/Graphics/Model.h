@@ -3,6 +3,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <unordered_map>
+#include <filesystem>
+#include <assimp/types.h>
 
 #include "Mesh.h"
 
@@ -33,6 +36,24 @@ private:
     );
 
     std::unique_ptr<Mesh> ProcessMesh(
-        const aiMesh* mesh
+        const aiMesh* mesh,
+        const aiScene* scene
+    );
+
+    std::filesystem::path modelDirectory;
+
+    std::unordered_map<
+        std::string,
+        std::shared_ptr<Texture2D>
+    > textureCache;
+
+    MaterialData LoadMaterial(
+        const aiMesh* mesh,
+        const aiScene* scene
+    );
+
+    std::shared_ptr<Texture2D> LoadTexture(
+        const aiScene* scene,
+        const aiString& texturePath
     );
 };

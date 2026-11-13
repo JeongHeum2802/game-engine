@@ -111,6 +111,7 @@ int main()
         sun.color = Vec3(1.0f, 1.0f, 1.0f);
         sun.intensity = 0.4f;
 
+
         double lastTime = glfwGetTime();
         
         // 메인 루프
