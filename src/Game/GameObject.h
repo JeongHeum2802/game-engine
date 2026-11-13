@@ -1,18 +1,25 @@
-
 #pragma once
+
+#include <iostream>
 
 #include "../Math/Vec3.h"
 #include "../Math/Mat4.h"
 #include "../Math/Transform.h"
 #include "../Graphics/Mesh.h"
+#include "../Graphics/Model.h"
 #include "../Shader.h"
 
 class GameObject
 {
 public:
     explicit GameObject(Mesh* mesh)
-        : mesh(mesh)
+    { 
+      meshes.push_back(mesh);
+    }
+
+    explicit GameObject(const Model& model)
     {
+        meshes = model.GetMeshes();
     }
 
     virtual ~GameObject() = default;
@@ -23,7 +30,7 @@ public:
 
     virtual void Render(Shader& shader) const
     {
-        if (!mesh)
+        if (meshes.empty())
             return;
 
         Mat4 model =
@@ -36,7 +43,11 @@ public:
         shader.SetMat4("uModel", model);
         shader.SetVec3("uObjectColor", color);
 
-        mesh->Draw();
+        for (Mesh* mesh : meshes)
+        {
+            if (mesh)
+                mesh->Draw();
+        }
     }
 
     Vec3 GetPosition()
@@ -51,5 +62,5 @@ public:
     Vec3 color = Vec3(1.0f, 1.0f, 1.0f);
 
 protected:
-    Mesh* mesh = nullptr;
+    std::vector<Mesh*> meshes;
 };

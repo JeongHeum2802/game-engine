@@ -19,6 +19,8 @@
 #include "Game/GameObject.h"
 #include "Game/Player.h"
 
+#include "Graphics/Model.h"
+
 // 창 크기 변경 콜백
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -41,7 +43,7 @@ int main()
 
     // 윈도우 생성
     GLFWwindow* window = glfwCreateWindow(
-        800, 600, "OpenGL Game", nullptr, nullptr
+        1600, 900, "OpenGL Game", nullptr, nullptr
     );
 
     if (!window)
@@ -63,6 +65,7 @@ int main()
     }
 
     glEnable(GL_DEPTH_TEST);
+
     glfwSwapInterval(1);
 
     int width, height;
@@ -92,10 +95,11 @@ int main()
 
         ground.position = Vec3(0.0f, -0.25f, 0.0f);
         ground.scale = Vec3(20.0f, 0.5f, 20.0f);
-        ground.color = Vec3(0.7f, 0.7f, 0.7f);
+        ground.color = Vec3(0.8f, 0.8f, 0.8f);
 
         // 씬에 플레이어 추가
-        Player player(cubeMesh.get());
+        Model playerModel("assets/models/character.glb");
+        Player player(playerModel);
 
         player.position = Vec3(0.0f, 0.5f, 0.0f);
         player.scale = Vec3(0.8f, 1.0f, 0.8f);
@@ -103,9 +107,9 @@ int main()
 
         // 빛 추가
         DirectionalLight sun;
-        sun.direction = Vec3(-1.0f, -1.0f, -1.0f);
+        sun.direction = Vec3(0.5f, -1.0f, 1.0f);
         sun.color = Vec3(1.0f, 1.0f, 1.0f);
-        sun.intensity = 0.8f;
+        sun.intensity = 0.4f;
 
         double lastTime = glfwGetTime();
         
@@ -117,7 +121,7 @@ int main()
             lastTime = currentTime;
 
             // 화면 초기화
-            glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+            glClearColor(0.69f, 0.8f, 0.9f, 1.0f);
             glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
             player.moveDirection = Vec3(0.0f, 0.0f, 0.0f);

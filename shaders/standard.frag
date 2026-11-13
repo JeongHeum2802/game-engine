@@ -78,7 +78,7 @@ void main()
     vec3 normal = normalize(vNormal);
 
     // 기본 환경광
-    vec3 lighting = vec3(0.1);
+    vec3 lighting = vec3(0.33);
 
     // Directional Light
     lighting += CalculateDirectionalLight(

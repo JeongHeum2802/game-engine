@@ -9,6 +9,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glad CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(OpenGL REQUIRED)
+find_package(assimp CONFIG REQUIRED)
 
 add_executable(OpenGLGame
     src/main.cpp
@@ -25,6 +26,8 @@ add_executable(OpenGLGame
     src/Graphics/Mesh.h
     src/Graphics/Mesh.cpp
     src/Graphics/Primitive.h
+    src/Graphics/Model.h
+    src/Graphics/Model.cpp
     src/Scene/Light.h
     src/Game/GameObject.h
     src/Game/Player.h
@@ -36,6 +39,11 @@ target_link_libraries(OpenGLGame PRIVATE
     glad::glad
     OpenGL::GL
     glm::glm
+    assimp::assimp
+)
+
+target_include_directories(OpenGLGame PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
 )
 
 set_target_properties(OpenGLGame PROPERTIES
