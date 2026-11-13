@@ -37,6 +37,8 @@ add_executable(OpenGLGame
     src/Game/GameObject.h
     src/Game/Player.h
     src/Game/Player.cpp
+    src/Game/Zombie.h
+    src/Game/Zombie.cpp
 )
 
 target_link_libraries(OpenGLGame PRIVATE

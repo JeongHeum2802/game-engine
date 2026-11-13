@@ -1,6 +1,10 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include <memory>
+#include <vector>
+#include <limits>
+#include <algorithm>
 
 #include "Shader.h"
 
@@ -21,6 +25,7 @@
 #include "Game/Player.h"
 #include "Game/Weapon.h"
 #include "Game/Collision.h"
+#include "Game/Zombie.h"
 
 #include "Graphics/Model.h"
 
@@ -89,7 +94,7 @@ int main()
         );
 
         FollowCamera camera;
-        camera.SetOffset(Vec3(0.0f, 15.0f, 7.5f));
+        camera.SetOffset(Vec3(0.0f, 15.0f, 9.0f));
 
         auto cubeMesh = Primitive::CreateCube();
 
@@ -119,25 +124,33 @@ int main()
         // pointLight1.color = Vec3(1.0f, 1.0f, 1.0f);
 
         // 적 추가
-        auto enemyMesh = Primitive::CreateSphere();
+        std::vector<std::unique_ptr<Zombie>> zombies;
 
-        GameObject enemy(enemyMesh.get());
+        Model zombieModel("assets/models/zombie.glb");
 
-        enemy.position = Vec3(3.0f, 0.65f, -4.0f);
-        enemy.scale = Vec3(1.3f, 1.3f, 1.3f);
-        enemy.color = Vec3(0.8f, 0.2f, 0.2f);
+        auto SpawnZombie = [&](const Vec3& spawnPosition)
+        {
+            auto zombie = std::make_unique<Zombie>(zombieModel);
 
-        // Sphere 기본 반지름 0.5 * Scale 1.3
-        float enemyRadius = 0.65f;
+            zombie->position = spawnPosition;
+            zombie->scale = Vec3(1.0f, 1.0f, 1.0f);
 
-        float enemyHealth = 100.0f;
-        float hitFlashTimer = 0.0f;
+            zombie->moveSpeed = 1.5f;
+            zombie->attackRange = 1.0f;
+            zombie->collisionRadius = 0.5f;
+
+            zombies.push_back(std::move(zombie));
+        };
+
+        SpawnZombie(Vec3( 4.0f, 0.5f, -4.0f));
+        SpawnZombie(Vec3(-5.0f, 0.5f, -2.0f));
+        SpawnZombie(Vec3( 2.0f, 0.5f,  5.0f));
 
         Weapon weapon;  
 
         double lastTime = glfwGetTime();
         
-        // 메인 루프
+        // 메인 루프dww
         while (!glfwWindowShouldClose(window))
         {
             double currentTime = glfwGetTime();
@@ -163,13 +176,18 @@ int main()
                 player.moveDirection.x += 1.0f;
             
             player.Update(deltaTime);
+
+            for (auto& zombie : zombies)
+            {
+              zombie->SetTarget(player.GetPosition());
+              zombie->Update(static_cast<float>(deltaTime));
+            }
+
             camera.Update(player.GetPosition());
 
             // 3. 마우스 위치 획득
             double mouseX, mouseY;
             glfwGetCursorPos(window, &mouseX, &mouseY);
-
-            float aspect = static_cast<float>(width) / height;
 
             int windowWidth, windowHeight;
             int framebufferWidth, framebufferHeight;
@@ -185,14 +203,18 @@ int main()
                 &framebufferWidth,
                 &framebufferHeight
             );
+            float aspect = 1.0f;
+
+            if (framebufferHeight > 0)
+            {
+                aspect =
+                    static_cast<float>(framebufferWidth) /
+                    framebufferHeight;
+            }
 
             if (windowWidth > 0 && windowHeight > 0 &&
                 framebufferWidth > 0 && framebufferHeight > 0)
             {
-                float aspect =
-                    static_cast<float>(framebufferWidth) /
-                    framebufferHeight;
-
                 // 5. 화면 좌표 -> 월드 Ray
                 Ray mouseRay =
                     camera.GetCamera().ScreenPointToRay(
@@ -231,34 +253,65 @@ int main()
                                 bulletDirection =
                                     bulletDirection.Normalized();
 
-                                float hitDistance = 0.0f;
+                                Zombie* hitZombie = nullptr;
 
-                                if (enemyHealth > 0.0f &&
-                                    RaycastCircleXZ(
+                                float closestDistance = weapon.range;
+
+                                for (auto& zombie : zombies)
+                                {
+                                    if (zombie->IsDead())
+                                        continue;
+
+                                    float hitDistance = 0.0f;
+
+                                    bool hit = RaycastCircleXZ(
                                         player.position,
                                         bulletDirection,
-                                        enemy.position,
-                                        enemyRadius,
+                                        zombie->position,
+                                        zombie->collisionRadius,
                                         weapon.range,
                                         hitDistance
-                                    ))
+                                    );
+
+                                    if (hit && hitDistance <= closestDistance)
+                                    {
+                                        closestDistance = hitDistance;
+                                        hitZombie = zombie.get();
+                                    }
+                                }
+
+                                // 가장 가까운 좀비에게만 데미지 적용
+                                if (hitZombie != nullptr)
                                 {
-                                    enemyHealth -= weapon.damage;
-
-                                    if (enemyHealth < 0.0f)
-                                        enemyHealth = 0.0f;
-
-                                    hitFlashTimer = 0.12f;
+                                    hitZombie->TakeDamage(weapon.damage);
 
                                     std::cout
                                         << "Zombie HP: "
-                                        << enemyHealth << '\n';
+                                        << hitZombie->GetHealth()
+                                        << '\n';
+
+                                    if (hitZombie->IsDead())
+                                    {
+                                        std::cout << "Zombie killed!\n";
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+
+            zombies.erase(
+                std::remove_if(
+                    zombies.begin(),
+                    zombies.end(),
+                    [](const std::unique_ptr<Zombie>& zombie)
+                    {
+                        return zombie->IsDead();
+                    }
+                ),
+                zombies.end()
+            );
 
             Mat4 view = camera.GetCamera().GetViewMatrix();
             Mat4 projection = camera.GetCamera().GetProjectionMatrix(aspect);
@@ -271,32 +324,18 @@ int main()
             shader.SetVec3("uObjectColor",Vec3(1.0f, 1.0f, 1.0f));
 
             shader.SetDirectionalLight("uDirectionalLight",sun);
-            // shader.SetInt("uPointLightCount", 1);
-
-            // 첫 번째 Point Light
-            // shader.SetPointLight(
-            //     "uPointLights[0]",
-            //     pointLight1
-            // );
-
-            hitFlashTimer -= static_cast<float>(deltaTime);
-
-            if (hitFlashTimer > 0.0f)
+            
+            for (const auto& zombie : zombies)
             {
-                enemy.color = Vec3(1.0f, 1.0f, 1.0f);
+                if (!zombie->IsDead())
+                {
+                    zombie->Render(shader);
+                }
             }
-            else
-            {
-                enemy.color = Vec3(0.8f, 0.2f, 0.2f);
-            }
+            
 
             player.Render(shader);
             ground.Render(shader);
-
-            if (enemyHealth > 0.0f)
-            {
-                enemy.Render(shader);
-            }
 
             // 화면 출력
             glfwSwapBuffers(window);

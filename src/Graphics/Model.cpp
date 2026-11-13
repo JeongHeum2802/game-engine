@@ -173,13 +173,9 @@ MaterialData Model::LoadMaterial(
     // GLB의 BaseColor Factor
     aiColor4D color;
 
-    if (material->Get(
-        AI_MATKEY_BASE_COLOR, color
-    ) == AI_SUCCESS)
+    if (material->Get(AI_MATKEY_BASE_COLOR, color) == AI_SUCCESS)
     {
-        result.baseColor = Vec3(
-            color.r, color.g, color.b
-        );
+        result.baseColor = Vec3(color.r, color.g, color.b);
     }
     else
     {
@@ -201,7 +197,6 @@ MaterialData Model::LoadMaterial(
 
     // GLB의 BaseColor Texture 우선 사용
     aiTextureType type = aiTextureType_BASE_COLOR;
-
     if (material->GetTextureCount(type) == 0)
         type = aiTextureType_DIFFUSE;
 
