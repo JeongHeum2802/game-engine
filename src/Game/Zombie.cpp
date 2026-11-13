@@ -81,3 +81,21 @@ float Zombie::GetHealth() const
 {
     return health;
 }
+
+
+bool Zombie::TryAttack(double currentTime)
+{
+    if (IsDead() || !IsInAttackRange())
+        return false;
+
+    if (attackInterval <= 0.0f)
+        return false;
+
+    // 공격 쿨다운 검사
+    if (currentTime - lastAttackTime < attackInterval)
+        return false;
+
+    lastAttackTime = currentTime;
+
+    return true;
+}
