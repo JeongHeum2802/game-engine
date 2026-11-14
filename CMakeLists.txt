@@ -35,6 +35,8 @@ add_executable(OpenGLGame
     src/Graphics/Texture2D.h
     src/Graphics/Texture2D.cpp
     src/Scene/Light.h
+    src/Game/Game.h
+    src/Game/Game.cpp
     src/Game/GameObject.h
     src/Game/Player.h
     src/Game/Player.cpp
@@ -42,6 +44,7 @@ add_executable(OpenGLGame
     src/Game/Zombie.cpp
     src/Game/ZombieSpawner.h
     src/Game/ZombieSpawner.cpp
+    src/Game/BulletEffects.h
     src/Audio/AudioManager.h
     src/Audio/AudioManager.cpp
 )
