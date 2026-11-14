@@ -6,6 +6,9 @@
 #include <glad/glad.h>
 #include "Graphics/Primitive.h"
 #include "Game/Collision.h"
+#include "Graphics/AnimationInspector.h"
+#include "Graphics/Animation/AnimatedModel.h"
+#include "Graphics/Animation/Animator.h"
 #include "Math/Ray.h"
 
 Game::Game(GLFWwindow* window)
@@ -35,6 +38,38 @@ Game::Game(GLFWwindow* window)
 
     audio.SetVolume(0.7f);
     camera.Update(player.GetPosition());
+
+        
+    // 1. Skinned Shader
+    skinnedShader = std::make_unique<Shader>(
+        "shaders/skinned.vert",
+        "shaders/skinned.frag"
+    );
+
+    // 2. 애니메이션 모델 데이터
+    animatedPlayerModel = std::make_unique<AnimatedModel>(
+        "assets/models/character.glb"
+    );
+
+    // 3. GPU Mesh 생성
+    for (const auto& meshData :
+        animatedPlayerModel->GetMeshes())
+    {
+        animatedPlayerMeshes.push_back(
+            std::make_unique<AnimatedMesh>(
+                meshData.vertices,
+                meshData.indices
+            )
+        );
+    }
+
+    // 4. Animator 생성
+    playerAnimator = std::make_unique<Animator>(
+        *animatedPlayerModel
+    );
+
+    // 5. 걷기 애니메이션 재생
+    playerAnimator->Play("Walk_Rifle", true);
 }
 
 void Game::ProcessInput()
@@ -59,20 +94,17 @@ void Game::Update(float deltaTime, double currentTime)
     if (!player.IsDead())
     {
         player.Update(deltaTime);
+
         UpdateZombies(deltaTime, currentTime);
-    }
 
-    camera.Update(player.GetPosition());
-
-    if (!player.IsDead())
+        camera.Update(player.GetPosition());
         UpdateAimAndShooting(currentTime);
 
-    RemoveDeadZombies();
-
-    if (!player.IsDead())
+        RemoveDeadZombies();
         UpdateSpawning(deltaTime);
+    }
 
-    // 게임 오버 후에도 이미 생성된 이펙트는 사라질 때까지 갱신.
+    UpdatePlayerAnimation(deltaTime);
     bulletEffects.Update(deltaTime);
 }
 
@@ -144,6 +176,8 @@ void Game::FireShot(const Vec3& aimPosition, double currentTime)
 
     if (!weapon.TryFire(currentTime))
         return;
+
+    shotTriggered = true;
 
     direction = direction.Normalized();
     audio.Play("gunshot.wav");
@@ -252,13 +286,154 @@ void Game::Render()
     shader.SetDirectionalLight("uDirectionalLight", sun);
 
     ground.Render(shader);
-    player.Render(shader);
+    
 
     for (const auto& zombie : zombies)
         zombie->Render(shader);
+
+    RenderAnimatedPlayer(view, projection);
 
     effectShader.Use();
     effectShader.SetMat4("uView", view);
     effectShader.SetMat4("uProjection", projection);
     bulletEffects.Render(effectShader);
+}
+
+void Game::UpdatePlayerAnimation(float deltaTime)
+{
+    if (!playerAnimator)
+        return;
+
+    // 게임 오버 시 현재 포즈 유지
+    if (player.IsDead())
+    {
+        shotTriggered = false;
+        return;
+    }
+
+    // 1. 실제 총격 발생
+    if (shotTriggered)
+    {
+        playerAnimator->Play("Shoot_Rifle", false);
+        playerAnimator->Restart();
+
+        animationState = PlayerAnimationState::Shoot;
+    }
+
+    // 2. 사격 중이 아니거나 사격 애니메이션 종료
+    else if (
+        animationState != PlayerAnimationState::Shoot ||
+        playerAnimator->IsFinished()
+    )
+    {
+        bool isMoving =
+            player.moveDirection.Length() > 0.001f;
+
+        PlayerAnimationState nextState =
+            isMoving
+                ? PlayerAnimationState::Walk
+                : PlayerAnimationState::Idle;
+
+        // 상태가 변경되었을 때만 클립 전환
+        if (animationState != nextState)
+        {
+            playerAnimator->Play("Walk_Rifle", true);
+
+            if (nextState == PlayerAnimationState::Idle)
+            {
+                // 임시 Idle: 걷기 첫 프레임 고정
+                playerAnimator->Restart();
+            }
+
+            animationState = nextState;
+        }
+    }
+
+    // Idle 상태에서는 애니메이션 시간을 진행하지 않음
+    if (animationState != PlayerAnimationState::Idle)
+    {
+        playerAnimator->Update(deltaTime);
+    }
+    else
+    {
+        // Idle로 진입했을 때 계산된 첫 포즈 유지
+        playerAnimator->Update(0.0f);
+    }
+
+    // 한 프레임짜리 사격 이벤트 초기화
+    shotTriggered = false;
+}
+
+
+void Game::RenderAnimatedPlayer(
+    const Mat4& view,
+    const Mat4& projection
+)
+{
+    if (!skinnedShader ||
+        !playerAnimator ||
+        !animatedPlayerModel)
+    {
+        return;
+    }
+
+    skinnedShader->Use();
+
+    // Player의 실제 Transform 적용
+    Mat4 model =
+        Transform::Translate(player.position) *
+        Transform::RotateY(player.rotation.y) *
+        Transform::Scale(player.scale);
+
+    skinnedShader->SetMat4("uModel", model);
+    skinnedShader->SetMat4("uView", view);
+    skinnedShader->SetMat4(
+        "uProjection",
+        projection
+    );
+
+    skinnedShader->SetVec3(
+        "uLightDirection",
+        sun.direction
+    );
+
+    skinnedShader->SetVec3(
+        "uLightColor",
+        sun.color
+    );
+
+    skinnedShader->SetFloat(
+        "uLightIntensity",
+        sun.intensity
+    );
+
+    // GPU에 본 행렬 전달
+    const auto& boneMatrices =
+        playerAnimator->GetFinalBoneMatrices();
+
+    for (size_t i = 0;
+         i < boneMatrices.size() && i < 100;
+         ++i)
+    {
+        skinnedShader->SetMat4(
+            "uBoneMatrices[" + std::to_string(i) + "]",
+            boneMatrices[i]
+        );
+    }
+
+    // 메시별 Material 색상 적용
+    const auto& meshes =
+        animatedPlayerModel->GetMeshes();
+
+    for (size_t i = 0;
+         i < animatedPlayerMeshes.size();
+         ++i)
+    {
+        skinnedShader->SetVec3(
+            "uBaseColor",
+            meshes[i].baseColor
+        );
+
+        animatedPlayerMeshes[i]->Draw();
+    }
 }

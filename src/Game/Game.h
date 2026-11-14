@@ -13,6 +13,9 @@
 #include "Scene/Light.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Model.h"
+#include "Graphics/Animation/AnimatedModel.h"
+#include "Graphics/Animation/AnimatedMesh.h"
+#include "Graphics/Animation/Animator.h"
 #include "Game/GameObject.h"
 #include "Game/Player.h"
 #include "Game/Zombie.h"
@@ -64,4 +67,32 @@ private:
     static constexpr std::size_t MAX_ZOMBIES = 20;
     int killCount = 0;
     float aspect = 16.0f / 9.0f;
+
+    std::unique_ptr<Shader> skinnedShader;
+
+    std::unique_ptr<AnimatedModel> animatedPlayerModel;
+    std::unique_ptr<Animator> playerAnimator;
+
+    std::vector<std::unique_ptr<AnimatedMesh>>
+        animatedPlayerMeshes;
+
+    enum class PlayerAnimationState
+    {
+        Idle,
+        Walk,
+        Run,
+        Shoot
+    };
+
+    PlayerAnimationState animationState =
+        PlayerAnimationState::Idle;
+
+    // 이번 프레임에 실제 총격이 발생했는지
+    bool shotTriggered = false;
+
+    void UpdatePlayerAnimation(float deltaTime);
+    void RenderAnimatedPlayer(
+        const Mat4& view,
+        const Mat4& projection
+    );
 };
