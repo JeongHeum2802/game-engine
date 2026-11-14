@@ -27,6 +27,7 @@
 #include "Game/Collision.h"
 #include "Game/Zombie.h"
 #include "Game/ZombieSpawner.h"
+#include "Game/BulletEffects.h"
 
 #include "Audio/AudioManager.h"
 
@@ -95,6 +96,11 @@ int main()
             "shaders/standard.frag"
         );
 
+        Shader effectShader(
+          "shaders/effect.vert",
+          "shaders/effect.frag"
+        );
+
         FollowCamera camera;
         camera.SetOffset(Vec3(0.0f, 15.0f, 9.0f));
 
@@ -121,9 +127,8 @@ int main()
         sun.color = Vec3(1.0f, 1.0f, 1.0f);
         sun.intensity = 0.9f;
 
-        // PointLight pointLight1;
-        // pointLight1.position = Vec3(0.0f, 2.0f, 0.0f);
-        // pointLight1.color = Vec3(1.0f, 1.0f, 1.0f);
+        // 총알 이펙트 추가
+        BulletEffects bulletEffects(cubeMesh.get());
 
         // 적 추가
         std::vector<std::unique_ptr<Zombie>> zombies;
@@ -281,7 +286,6 @@ int main()
                                     bulletDirection.Normalized();
 
                                 Zombie* hitZombie = nullptr;
-
                                 float closestDistance = weapon.range;
 
                                 for (auto& zombie : zombies)
@@ -306,6 +310,33 @@ int main()
                                         hitZombie = zombie.get();
                                     }
                                 }
+
+                                // 총알 이펙트 추가
+
+                                const float muzzleOffset = 0.55f;
+
+                                // 원래 Raycast는 플레이어 중심에서 시작하므로
+                                // 시각 효과의 이동 거리를 보정
+
+                                bool hit = hitZombie != nullptr;
+                                float visualDistance = hit
+                                    ? std::max(0.05f, closestDistance - muzzleOffset)
+                                    : std::min(15.0f, weapon.range);
+
+                                Vec3 muzzlePosition =
+                                    player.position +
+                                    bulletDirection * muzzleOffset;
+
+                                // 총알을 캐릭터 높이에 맞춰 배치
+                                muzzlePosition.y += 0.7f;
+
+                                // 총구 섬광 + 움직이는 궤적 + 명중 섬광
+                                bulletEffects.Spawn(
+                                    muzzlePosition,
+                                    bulletDirection,
+                                    visualDistance,
+                                    hit
+                                );
 
                                 // 가장 가까운 좀비에게만 데미지 적용
                                 if (hitZombie != nullptr)
@@ -337,6 +368,8 @@ int main()
                     }
                 }
             }
+
+            bulletEffects.Update(static_cast<float>(deltaTime));
 
             zombies.erase(
                 std::remove_if(
@@ -390,6 +423,14 @@ int main()
 
             player.Render(shader);
             ground.Render(shader);
+
+            effectShader.Use();
+
+            effectShader.SetMat4("uView", view);
+            effectShader.SetMat4("uProjection", projection);
+
+            // 총격 이펙트 출력
+            bulletEffects.Render(effectShader);
 
             // 화면 출력
             glfwSwapBuffers(window);
