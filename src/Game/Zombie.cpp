@@ -99,3 +99,65 @@ bool Zombie::TryAttack(double currentTime)
 
     return true;
 }
+
+void Zombie::SetupAnimation(
+    const AnimatedModelResource& resource,
+    const std::string& walkClip,
+    const std::string& attackClip
+)
+{
+    walkAnimation = walkClip;
+    attackAnimation = attackClip;
+
+    visual = std::make_unique<AnimatedCharacter>(resource);
+
+    // 기본적으로 걷기 애니메이션 재생
+    if (!visual->Play(walkAnimation, true))
+    {
+        visual.reset();
+        return;
+    }
+
+    visual->Update(0.0f);
+    isPlayingAttackAnimation = false;
+}
+
+void Zombie::UpdateAnimation(float deltaTime)
+{
+    if (!visual || IsDead())
+        return;
+
+    visual->Update(deltaTime);
+
+    // 공격이 끝나면 다시 걷기로 전환
+    if (isPlayingAttackAnimation && visual->IsFinished())
+    {
+        visual->Play(walkAnimation, true);
+        isPlayingAttackAnimation = false;
+    }
+}
+
+void Zombie::TriggerAttackAnimation()
+{
+    if (!visual || attackAnimation.empty() || IsDead())
+        return;
+
+    // 실제 공격이 발생했을 때만 호출
+    if (visual->Play(attackAnimation, false))
+    {
+        visual->Restart();
+        isPlayingAttackAnimation = true;
+    }
+}
+
+void Zombie::RenderAnimation(
+    Shader& shader,
+    const Mat4& modelMatrix
+) const
+{
+    if (!visual)
+        return;
+
+    visual->Render(shader, modelMatrix);
+}
+

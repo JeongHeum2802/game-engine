@@ -10,6 +10,13 @@
     "glm",
     "assimp",
     "stb",
-    "miniaudio"
+    "miniaudio",
+    {
+      "name": "imgui",
+      "features": [
+        "glfw-binding",
+        "opengl3-binding"
+      ]
+    }
   ]
 }

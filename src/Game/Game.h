@@ -13,9 +13,9 @@
 #include "Scene/Light.h"
 #include "Graphics/Mesh.h"
 #include "Graphics/Model.h"
-#include "Graphics/Animation/AnimatedModel.h"
-#include "Graphics/Animation/AnimatedMesh.h"
+#include "Graphics/Animation/AnimatedModelResource.h"
 #include "Graphics/Animation/Animator.h"
+#include "Graphics/Animation/AnimatedCharacter.h"
 #include "Game/GameObject.h"
 #include "Game/Player.h"
 #include "Game/Zombie.h"
@@ -32,6 +32,9 @@ public:
     void ProcessInput();
     void Update(float deltaTime, double currentTime);
     void Render();
+    float GetPlayerHealth() const;
+    int GetKillCount() const;
+    bool IsGameOver() const;
 
 private:
     void UpdateZombies(float deltaTime, double currentTime);
@@ -69,13 +72,13 @@ private:
     float aspect = 16.0f / 9.0f;
 
     std::unique_ptr<Shader> skinnedShader;
+    std::unique_ptr<AnimatedModelResource> playerResource;
+    std::unique_ptr<AnimatedCharacter> playerVisual;
 
-    std::unique_ptr<AnimatedModel> animatedPlayerModel;
-    std::unique_ptr<Animator> playerAnimator;
-
-    std::vector<std::unique_ptr<AnimatedMesh>>
-        animatedPlayerMeshes;
-
+    std::unique_ptr<AnimatedModelResource> zombieResource;
+    std::string zombieWalkClip;
+    std::string zombieAttackClip;
+    
     enum class PlayerAnimationState
     {
         Idle,

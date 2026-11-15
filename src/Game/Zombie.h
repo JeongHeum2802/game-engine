@@ -1,6 +1,10 @@
 #pragma once
 
 #include "GameObject.h"
+#include <memory>
+#include <string>
+
+#include "Graphics/Animation/AnimatedCharacter.h"
 
 class Zombie : public GameObject
 {
@@ -21,7 +25,23 @@ public:
 
     bool TryAttack(double currentTime);
 
+    // 좀비 생성 후 애니메이션 연결
+    void SetupAnimation(
+        const AnimatedModelResource& resource,
+        const std::string& walkClip,
+        const std::string& attackClip = ""
+    );
 
+    void UpdateAnimation(float deltaTime);
+
+    void TriggerAttackAnimation();
+
+    void RenderAnimation(
+        Shader& shader,
+        const Mat4& modelMatrix
+    ) const;
+
+    bool HasAnimation() const { return visual != nullptr; }
 
     float moveSpeed = 1.5f;
     float attackRange = 1.0f;
@@ -36,4 +56,11 @@ private:
     float health = 100.0f;
     bool inAttackRange = false;
     double lastAttackTime = -1.0e9;
+
+    std::unique_ptr<AnimatedCharacter> visual;
+
+    std::string walkAnimation;
+    std::string attackAnimation;
+
+    bool isPlayingAttackAnimation = false;
 };

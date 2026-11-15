@@ -12,6 +12,7 @@ find_package(OpenGL REQUIRED)
 find_package(assimp CONFIG REQUIRED)
 find_path(STB_INCLUDE_DIR NAMES stb_image.h REQUIRED)
 find_path(MINIAUDIO_INCLUDE_DIR NAMES miniaudio.h REQUIRED)
+find_package(imgui CONFIG REQUIRED)
 
 add_executable(OpenGLGame
     src/main.cpp
@@ -37,6 +38,8 @@ add_executable(OpenGLGame
     src/Graphics/Animation/AnimatedModel.cpp
     src/Graphics/Animation/Animator.cpp
     src/Graphics/Animation/AnimatedMesh.cpp
+    src/Graphics/Animation/AnimatedModelResource.cpp
+    src/Graphics/Animation/AnimatedCharacter.cpp
     src/Scene/Light.h
     src/Game/Game.h
     src/Game/Game.cpp
@@ -52,6 +55,7 @@ target_link_libraries(OpenGLGame PRIVATE
     OpenGL::GL
     glm::glm
     assimp::assimp
+    imgui::imgui
 )
 
 target_include_directories(OpenGLGame PRIVATE
