@@ -39,7 +39,7 @@ Game::Game(GLFWwindow* window)
     audio.SetVolume(0.7f);
     camera.Update(player.GetPosition());
 
-        
+    
     // 1. Skinned Shader
     skinnedShader = std::make_unique<Shader>(
         "shaders/skinned.vert",
