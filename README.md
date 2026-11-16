@@ -10,7 +10,7 @@
 
 ### 시연 영상
 
-[Gameplay video](https://youtu.be/XRe8apI6Ndc)
+[Gameplay video (youtube)](https://youtu.be/XRe8apI6Ndc)
 
 ![Gameplay](assets/gameplay.gif)
 
